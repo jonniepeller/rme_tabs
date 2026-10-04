@@ -67,7 +67,9 @@ async def page(r, w):
     frames = ''.join(f'<iframe src="http://127.0.0.1:{ports[i]}/"></iframe>' for i in found)
     html = f'''<!doctype html><title>RME</title><style>
 body{{margin:0;height:100vh;display:flex;flex-direction:column;font:14px system-ui}}
-button{{padding:8px 16px;border:0;background:#ddd}} button.on{{background:#fff;font-weight:bold}}
+nav{{display:flex;gap:4px;padding:8px 8px 0;background:#2b2b2b;color:#ccc;border-bottom:3px solid #fff}}
+button{{padding:8px 20px;border:0;border-radius:8px 8px 0 0;background:#444;color:#ccc;font:inherit;cursor:pointer}}
+button:hover{{background:#555}} button.on{{background:#fff;color:#000;font-weight:600}}
 iframe{{flex:1;border:0;display:none}} iframe.on{{display:block}}</style>
 <nav>{tabs or 'No RME devices found on USB. Plug one in and reload.'}</nav>{frames}<script>
 function show(n){{for(const s of ['button','iframe'])document.querySelectorAll(s).forEach((e,i)=>e.classList.toggle('on',i==n))}}
