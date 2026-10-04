@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Show every USB-connected RME configurator as a tab on one page (macOS).
-
-Each device serves its configurator on the same address, over its own USB network interface.
-This gives each interface a local port that forwards to its device, and serves a page that
-frames those ports as tabs.
-
-Run: python3 rme_tabs.py
-"""
+"""Show every USB-connected RME configurator as a tab on one page. See README.md."""
 import asyncio, functools, re, socket, subprocess, webbrowser
 
 DEVICE = ('172.20.0.1', 80)
