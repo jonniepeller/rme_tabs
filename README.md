@@ -1,4 +1,4 @@
-# RME Configurator Switcher
+# RME Tabs
 
 Use the web configurators of several USB-connected RME devices at once, as tabs on one page.
 
