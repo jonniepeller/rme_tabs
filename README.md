@@ -18,14 +18,16 @@ python3 rme_tabs.py
 ```
 
 Your browser opens `http://127.0.0.1:8000` with one tab per connected device, labelled with
-its model name. Reload the page after plugging in another device. Stop with Ctrl+C.
+its model name. Devices are found once, at startup: after plugging in, unplugging or replugging
+a device, stop with Ctrl+C and run the tool again. Reloading the page is always safe.
 
-Each device is also reachable directly, at `http://127.0.0.1:8001`, `:8002` and so on.
+Each device is also reachable directly, at `http://127.0.0.1:8001`, `:8002` and so on, in
+order of interface name. The tool prints this list when it starts.
 
 ## How it works
 
 Each device appears to macOS as its own USB network interface. For every interface on the
-`172.20.0.x` subnet, the tool:
+`172.20.0.x` subnet found at startup, the tool:
 
 1. opens a local port that forwards all traffic to `172.20.0.1` through that interface only;
 2. asks the device for its model name via its JSON API (`POST /api/v2/self`);
