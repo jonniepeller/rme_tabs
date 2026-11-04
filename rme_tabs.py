@@ -5,6 +5,7 @@ import asyncio, functools, html, re, socket, subprocess, sys, webbrowser
 DEVICE = ('172.20.0.1', 80)
 HOST_SUBNET = 'inet 172.20.0.'
 PAGE_PORT = 8000
+PAGE_URL = f'http://127.0.0.1:{PAGE_PORT}'
 IP_BOUND_IF = 25  # macOS socket option: route this socket through one specific interface
 # macOS TCP keepalive options (level IPPROTO_TCP) and values: probe after 30 s idle, every
 # 10 s, give up after 3 misses, so a connection to a vanished device is dropped in about a minute
@@ -114,24 +115,36 @@ async def serve_page(page, reader, writer):
     writer.close()
 
 
-async def main():
+async def start():
+    """Find the devices and start serving them. Returns the servers and a line per device."""
     interfaces = rme_interfaces()
     if not interfaces:
-        sys.exit('No RME devices found on USB. Plug one in and run again.')
+        return [], []
 
     names = await asyncio.gather(*map(model_name, interfaces))
+    servers, lines = [], []
     tabs = frames = ''
     for n, (interface, name) in enumerate(zip(interfaces, names)):
         port = PAGE_PORT + 1 + n
-        await asyncio.start_server(functools.partial(forward_to_device, interface), '127.0.0.1', port)
+        servers.append(await asyncio.start_server(
+            functools.partial(forward_to_device, interface), '127.0.0.1', port))
         tabs += f'<button onclick="show({n})">{html.escape(name)}</button>'
         frames += f'<iframe src="http://127.0.0.1:{port}/"></iframe>'
-        print(f'{name} ({interface}): http://127.0.0.1:{port}')
+        lines.append(f'{name} ({interface}): http://127.0.0.1:{port}')
 
     page = (PAGE % (tabs, frames)).encode()
-    server = await asyncio.start_server(functools.partial(serve_page, page), '127.0.0.1', PAGE_PORT)
-    webbrowser.open(f'http://127.0.0.1:{PAGE_PORT}')
-    await server.serve_forever()
+    servers.append(await asyncio.start_server(functools.partial(serve_page, page), '127.0.0.1', PAGE_PORT))
+    return servers, lines
 
 
-asyncio.run(main())
+async def main():
+    servers, lines = await start()
+    if not servers:
+        sys.exit('No RME devices found on USB. Plug one in and run again.')
+    print('\n'.join(lines))
+    webbrowser.open(PAGE_URL)
+    await servers[-1].serve_forever()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

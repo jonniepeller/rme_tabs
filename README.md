@@ -24,6 +24,23 @@ a device, stop with Ctrl+C and run the tool again. Reloading the page is always 
 Each device is also reachable directly, at `http://127.0.0.1:8001`, `:8002` and so on, in
 order of interface name. The tool prints this list when it starts.
 
+## Menu bar app
+
+`RME Tabs.app` runs the same tool from the menu bar, with no Dock icon. Its **RME** menu has
+**Open** (show the page), **Rescan Devices** (use after plugging, unplugging or replugging)
+and **Quit**. To build it:
+
+```
+python3 -m venv .venv
+.venv/bin/pip install rumps pyinstaller
+.venv/bin/pyinstaller --noconfirm "RME Tabs.spec"
+```
+
+The app is written to `dist/RME Tabs.app`; drag it to Applications. It is not signed with a
+Developer ID, so open it the first time with right-click → Open. macOS then asks to let it
+find devices on your local network: allow this, then choose **Rescan Devices** if the tabs
+show interface names (`en14`) instead of model names.
+
 ## How it works
 
 Each device appears to macOS as its own USB network interface. For every interface on the
