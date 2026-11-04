@@ -13,7 +13,7 @@ if [ ! -x .venv/bin/pyinstaller ]; then
 fi
 
 echo '==> Building'
-.venv/bin/pyinstaller --noconfirm --log-level WARN "$APP.spec"
+.venv/bin/pyinstaller --noconfirm --log-level WARN app.spec
 
 if pgrep -xq "$APP"; then
     echo '==> Quitting the running app'

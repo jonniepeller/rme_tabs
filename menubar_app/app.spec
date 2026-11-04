@@ -1,9 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 
 
 a = Analysis(
-    ['rme_tabs_app.py'],
-    pathex=[],
+    ['app.py'],
+    pathex=[os.path.dirname(SPECPATH)],  # rme_tabs.py is in the folder above this spec
     binaries=[],
     datas=[],
     hiddenimports=[],

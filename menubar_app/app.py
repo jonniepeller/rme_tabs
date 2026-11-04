@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Run rme_tabs from the macOS menu bar. See README.md."""
-import asyncio, threading, webbrowser
+import asyncio, pathlib, sys, threading, webbrowser
 import rumps
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))  # rme_tabs.py is in the folder above
 import rme_tabs
 
 
