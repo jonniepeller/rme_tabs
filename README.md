@@ -28,15 +28,14 @@ order of interface name. The tool prints this list when it starts.
 
 `RME Tabs.app` runs the same tool from the menu bar, with no Dock icon. Its **RME** menu has
 **Open** (show the page), **Rescan Devices** (use after plugging, unplugging or replugging)
-and **Quit**. To build it:
+and **Quit**. To build it, install it in Applications and launch it, run:
 
 ```
-python3 -m venv .venv
-.venv/bin/pip install rumps pyinstaller
-.venv/bin/pyinstaller --noconfirm "RME Tabs.spec"
+./install.sh
 ```
 
-The app is written to `dist/RME Tabs.app`; drag it to Applications. It is not signed with a
+Run it again after any change to rebuild and replace the installed app; a running copy is
+quit first. The first run sets up `.venv` with rumps and PyInstaller. It is not signed with a
 Developer ID, so open it the first time with right-click → Open. macOS then asks to let it
 find devices on your local network: allow this, then choose **Rescan Devices** if the tabs
 show interface names (`en14`) instead of model names.
