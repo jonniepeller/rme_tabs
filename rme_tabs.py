@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Show every USB-connected RME configurator as a tab on one page. See README.md."""
-import asyncio, functools, html, re, socket, subprocess, sys, webbrowser
+import asyncio, functools, html, re, socket, subprocess, sys, typing, webbrowser
 
 DEVICE = ('172.20.0.1', 80)
 HOST_SUBNET = 'inet 172.20.0.'
@@ -72,7 +72,7 @@ async def model_name(interface):
         match = re.search(rb'"model_name":"([^"]+)"', reply)
         if match:
             return match[1].decode()
-    return interface
+    return None
 
 
 async def copy(reader, writer):
@@ -115,35 +115,63 @@ async def serve_page(page, reader, writer):
     writer.close()
 
 
-async def start():
-    """Find the devices and start serving them. Returns the servers and a line per device."""
-    interfaces = rme_interfaces()
-    if not interfaces:
-        return [], []
+class Device(typing.NamedTuple):
+    interface: str
+    name: typing.Optional[str]  # None if the device did not reply
+    port: int
 
-    names = await asyncio.gather(*map(model_name, interfaces))
-    servers, lines = [], []
-    tabs = frames = ''
-    for n, (interface, name) in enumerate(zip(interfaces, names)):
-        port = PAGE_PORT + 1 + n
-        servers.append(await asyncio.start_server(
-            functools.partial(forward_to_device, interface), '127.0.0.1', port))
-        tabs += f'<button onclick="show({n})">{html.escape(name)}</button>'
-        frames += f'<iframe src="http://127.0.0.1:{port}/"></iframe>'
-        lines.append(f'{name} ({interface}): http://127.0.0.1:{port}')
 
-    page = (PAGE % (tabs, frames)).encode()
-    servers.append(await asyncio.start_server(functools.partial(serve_page, page), '127.0.0.1', PAGE_PORT))
-    return servers, lines
+class Proxy:
+    """Serves each device found on its own port, and the page of tabs on PAGE_PORT."""
+
+    def __init__(self):
+        self.servers = []
+
+    async def start(self):
+        """Find the devices and serve them. Returns them, or [] if there are none.
+        Raises OSError, with nothing left running, if a port can't be opened."""
+        interfaces = rme_interfaces()
+        names = await asyncio.gather(*map(model_name, interfaces))
+        devices = [Device(interface, name, PAGE_PORT + 1 + n)
+                   for n, (interface, name) in enumerate(zip(interfaces, names))]
+        if not devices:
+            return []
+
+        tabs = frames = ''
+        try:
+            for n, device in enumerate(devices):
+                self.servers.append(await asyncio.start_server(
+                    functools.partial(forward_to_device, device.interface), '127.0.0.1', device.port))
+                tabs += f'<button onclick="show({n})">{html.escape(device.name or device.interface)}</button>'
+                frames += f'<iframe src="http://127.0.0.1:{device.port}/"></iframe>'
+            page = (PAGE % (tabs, frames)).encode()
+            self.servers.append(await asyncio.start_server(
+                functools.partial(serve_page, page), '127.0.0.1', PAGE_PORT))
+        except OSError:
+            self.stop()
+            raise
+        return devices
+
+    def stop(self):
+        """Stop serving, and end any open connections (on Python 3.13 or later)."""
+        for server in self.servers:
+            server.close()
+            if sys.version_info >= (3, 13):
+                server.close_clients()
+        self.servers = []
 
 
 async def main():
-    servers, lines = await start()
-    if not servers:
+    try:
+        devices = await Proxy().start()
+    except OSError as error:
+        sys.exit(f'Could not start: {error}')
+    if not devices:
         sys.exit('No RME devices found on USB. Plug one in and run again.')
-    print('\n'.join(lines))
+    for device in devices:
+        print(f'{device.name or "No reply"} ({device.interface}): http://127.0.0.1:{device.port}')
     webbrowser.open(PAGE_URL)
-    await servers[-1].serve_forever()
+    await asyncio.Event().wait()  # serve until Ctrl+C
 
 
 if __name__ == '__main__':

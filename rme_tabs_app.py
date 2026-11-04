@@ -12,7 +12,7 @@ class RMETabs(rumps.App):
         # The proxies run on their own event loop, since the menu bar needs the main thread
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.loop.run_forever, daemon=True).start()
-        self.servers = []
+        self.proxy = rme_tabs.Proxy()
 
     @rumps.clicked('Open')
     def open(self, _=None):
@@ -20,18 +20,23 @@ class RMETabs(rumps.App):
 
     @rumps.clicked('Rescan Devices')
     def rescan(self, _=None):
-        found = asyncio.run_coroutine_threadsafe(self.restart(), self.loop).result()
-        if found:
-            self.open()
-        else:
+        try:
+            devices = asyncio.run_coroutine_threadsafe(self.restart(), self.loop).result()
+        except OSError as error:
+            rumps.alert('RME Tabs could not start', f'{error}\n\nQuit anything else using it, then choose Rescan Devices.')
+            return
+        if not devices:
             rumps.alert('No RME devices found on USB', 'Plug one in and choose Rescan Devices.')
+            return
+        self.open()
+        if any(device.name is None for device in devices):
+            rumps.alert('Some devices did not reply',
+                        'If macOS asked to let RME Tabs find devices on your local network, allow it, '
+                        'then choose Rescan Devices.')
 
     async def restart(self):
-        for server in self.servers:
-            server.close()
-            server.close_clients()
-        self.servers, _ = await rme_tabs.start()
-        return bool(self.servers)
+        self.proxy.stop()
+        return await self.proxy.start()
 
 
 if __name__ == '__main__':

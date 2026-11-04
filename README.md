@@ -37,8 +37,9 @@ and **Quit**. To build it, install it in Applications and launch it, run:
 Run it again after any change to rebuild and replace the installed app; a running copy is
 quit first. The first run sets up `.venv` with rumps and PyInstaller. It is not signed with a
 Developer ID, so open it the first time with right-click → Open. macOS then asks to let it
-find devices on your local network: allow this, then choose **Rescan Devices** if the tabs
-show interface names (`en14`) instead of model names.
+find devices on your local network: allow this, then choose **Rescan Devices** if the app
+says some devices did not reply (their tabs show interface names such as `en14` instead of
+model names).
 
 ## How it works
 
